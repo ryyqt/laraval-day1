@@ -61,6 +61,16 @@
             <span class="nav-label">Categories</span>
         </a>
 
+        <a id="nav-products"
+           class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}"
+           href="{{ route('products.index') }}"
+           aria-current="{{ request()->routeIs('products.*') ? 'page' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375v11.25a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 17.625V6.375m17.25 0A2.25 2.25 0 0 0 18 4.125H6a2.25 2.25 0 0 0-2.25 2.25m17.25 0v.75A2.25 2.25 0 0 1 18 9.375H6a2.25 2.25 0 0 1-2.25-2.25v-.75"/>
+            </svg>
+            <span class="nav-label">Products</span>
+        </a>
+
         <a id="nav-users" class="nav-link" href="#">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round"
