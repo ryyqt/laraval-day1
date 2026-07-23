@@ -33,17 +33,7 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'category_id' => 'nullable|exists:categories,id',
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'quantity' => 'required|integer|min:0',
-            'description' => 'nullable|string|max:1000',
-        ], [
-            'name.required' => 'The product name is required.',
-            'price.required' => 'The price is required.',
-            'quantity.required' => 'The quantity is required.',
-        ]);
+        $validated = $this->validateProduct($request);
 
         Product::create($validated);
 
@@ -73,17 +63,7 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
-        $validated = $request->validate([
-            'category_id' => 'nullable|exists:categories,id',
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'quantity' => 'required|integer|min:0',
-            'description' => 'nullable|string|max:1000',
-        ], [
-            'name.required' => 'The product name is required.',
-            'price.required' => 'The price is required.',
-            'quantity.required' => 'The quantity is required.',
-        ]);
+        $validated = $this->validateProduct($request);
 
         $product->update($validated);
 
@@ -98,5 +78,28 @@ class ProductController extends Controller
         $product->delete();
 
         return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
+    }
+
+    protected function validateProduct(Request $request): array
+    {
+        return $request->validate([
+            'category_id' => ['nullable', 'exists:categories,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'quantity' => ['required', 'integer', 'min:0'],
+            'description' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'category_id.exists' => 'Please select a valid category.',
+            'name.required' => 'The product name is required.',
+            'name.string' => 'The product name must be text.',
+            'name.max' => 'The product name must not exceed 255 characters.',
+            'price.required' => 'The price is required.',
+            'price.numeric' => 'The price must be a valid number.',
+            'price.min' => 'The price must be 0 or greater.',
+            'quantity.required' => 'The quantity is required.',
+            'quantity.integer' => 'The quantity must be a whole number.',
+            'quantity.min' => 'The quantity must be 0 or greater.',
+            'description.max' => 'The description must not exceed 1000 characters.',
+        ]);
     }
 }
