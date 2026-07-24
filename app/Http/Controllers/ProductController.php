@@ -11,11 +11,35 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('category')->latest()->get();
+        $query = Product::with('category');
 
-        return view('products.index', compact('products'));
+        // Search by product name
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // Filter by category
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Sort: latest (default) or oldest
+        $sort = $request->get('sort', 'latest');
+        if ($sort === 'oldest') {
+            $query->oldest();
+        } else {
+            $query->latest();
+        }
+
+        // Paginate — 10 per page, keep query string in links
+        $products = $query->paginate(10)->withQueryString();
+
+        // All categories for the filter dropdown
+        $categories = Category::orderBy('name')->get();
+
+        return view('products.index', compact('products', 'categories', 'sort'));
     }
 
     /**
