@@ -73,6 +73,44 @@
     .char-count.warn { color: #f59e0b; }
     .char-count.over { color: #f43f5e; }
 
+    /* ── Image upload zone ── */
+    .upload-zone {
+        border: 2px dashed var(--border); border-radius: var(--radius-sm);
+        padding: 28px 20px; text-align: center; cursor: pointer;
+        transition: var(--transition); background: var(--bg-elevated);
+        position: relative;
+    }
+    .upload-zone:hover,
+    .upload-zone.drag-over { border-color: var(--accent-1); background: var(--accent-soft); }
+    .upload-zone input[type="file"] {
+        position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+        padding: 0; border: none; background: none;
+    }
+    .upload-zone-icon {
+        width: 48px; height: 48px; border-radius: 50%; background: var(--accent-soft);
+        display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;
+    }
+    .upload-zone-icon svg { width: 22px; height: 22px; color: var(--accent-1); }
+    .upload-zone p { font-size: 0.875rem; color: var(--text-secondary); }
+    .upload-zone span { font-size: 0.78rem; color: var(--text-muted); }
+
+    .img-preview-wrap {
+        display: none; position: relative; margin-top: 12px;
+        border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border);
+    }
+    .img-preview-wrap img {
+        width: 100%; max-height: 260px; object-fit: cover; display: block;
+    }
+    .img-preview-remove {
+        position: absolute; top: 8px; right: 8px;
+        width: 30px; height: 30px; border-radius: 50%;
+        background: rgba(0,0,0,0.55); border: none; cursor: pointer; color: #fff;
+        display: flex; align-items: center; justify-content: center; transition: var(--transition);
+    }
+    .img-preview-remove:hover { background: #f43f5e; }
+    .img-preview-remove svg { width: 16px; height: 16px; }
+
+    /* ── Footer / buttons ── */
     .form-footer {
         display: flex; align-items: center; justify-content: flex-end; gap: 10px;
         padding: 20px 28px; border-top: 1px solid var(--border); background: var(--bg-elevated);
@@ -119,10 +157,11 @@
             </div>
         </div>
 
-        <form action="{{ route('products.store') }}" method="POST" novalidate>
+        <form action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data" novalidate>
             @csrf
 
             <div class="form-body">
+                {{-- Product Name --}}
                 <div class="field-group">
                     <label for="name">Product Name <span class="required">*</span></label>
                     <div class="input-wrap">
@@ -141,6 +180,7 @@
                     @enderror
                 </div>
 
+                {{-- Category --}}
                 <div class="field-group">
                     <label for="category_id">Category</label>
                     <div class="input-wrap">
@@ -161,6 +201,7 @@
                     @enderror
                 </div>
 
+                {{-- Price --}}
                 <div class="field-group">
                     <label for="price">Price <span class="required">*</span></label>
                     <div class="input-wrap">
@@ -174,6 +215,7 @@
                     @enderror
                 </div>
 
+                {{-- Quantity --}}
                 <div class="field-group">
                     <label for="quantity">Quantity <span class="required">*</span></label>
                     <div class="input-wrap">
@@ -187,6 +229,7 @@
                     @enderror
                 </div>
 
+                {{-- Description --}}
                 <div class="field-group">
                     <label for="description">Description</label>
                     <textarea id="description" name="description" placeholder="Add a short product description" maxlength="1000" class="{{ $errors->has('description') ? 'is-invalid' : '' }}">{{ old('description') }}</textarea>
@@ -198,6 +241,43 @@
                         @enderror
                         <span class="char-count" id="desc-counter">0 / 1000</span>
                     </div>
+                </div>
+
+                {{-- Image Upload --}}
+                <div class="field-group">
+                    <label for="image">Product Image</label>
+
+                    <div class="upload-zone" id="upload-zone">
+                        <input type="file" id="image" name="image" accept="image/*" class="{{ $errors->has('image') ? 'is-invalid' : '' }}">
+                        <div class="upload-zone-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+                            </svg>
+                        </div>
+                        <p>Click to upload or drag and drop</p>
+                        <span>JPG, PNG, WEBP, GIF · max 2 MB</span>
+                    </div>
+
+                    {{-- Live preview --}}
+                    <div class="img-preview-wrap" id="img-preview-wrap">
+                        <img id="img-preview" src="" alt="Image preview">
+                        <button type="button" class="img-preview-remove" id="img-preview-remove" title="Remove image">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    @error('image')
+                        <span class="field-error">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"/>
+                            </svg>
+                            {{ $message }}
+                        </span>
+                    @enderror
+
+                    <span class="field-hint">Optional — upload a photo for this product.</span>
                 </div>
             </div>
 
@@ -217,6 +297,7 @@
 
 @section('scripts')
 <script>
+    // Description char counter
     const descEl = document.getElementById('description');
     const counterEl = document.getElementById('desc-counter');
     const MAX = 1000;
@@ -226,10 +307,37 @@
         counterEl.textContent = len + ' / ' + MAX;
         counterEl.className = 'char-count' + (len > MAX * 0.9 && len <= MAX ? ' warn' : len > MAX ? ' over' : '');
     }
+    if (descEl) { descEl.addEventListener('input', updateCounter); updateCounter(); }
 
-    if (descEl) {
-        descEl.addEventListener('input', updateCounter);
-        updateCounter();
-    }
+    // Image preview
+    const imageInput    = document.getElementById('image');
+    const previewWrap   = document.getElementById('img-preview-wrap');
+    const previewImg    = document.getElementById('img-preview');
+    const removeBtn     = document.getElementById('img-preview-remove');
+    const uploadZone    = document.getElementById('upload-zone');
+
+    imageInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            previewImg.src = e.target.result;
+            previewWrap.style.display = 'block';
+            uploadZone.style.display  = 'none';
+        };
+        reader.readAsDataURL(file);
+    });
+
+    removeBtn.addEventListener('click', function () {
+        imageInput.value = '';
+        previewImg.src   = '';
+        previewWrap.style.display = 'none';
+        uploadZone.style.display  = 'block';
+    });
+
+    // Drag-and-drop highlight
+    uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+    uploadZone.addEventListener('drop',      e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); });
 </script>
 @endsection

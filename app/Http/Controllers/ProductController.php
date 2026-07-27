@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -59,6 +60,11 @@ class ProductController extends Controller
     {
         $validated = $this->validateProduct($request);
 
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        }
+
         Product::create($validated);
 
         return redirect()->route('products.index')->with('success', 'Product created successfully.');
@@ -89,6 +95,22 @@ class ProductController extends Controller
     {
         $validated = $this->validateProduct($request);
 
+        // Handle image update — delete old image first
+        if ($request->hasFile('image')) {
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        }
+
+        // Allow explicitly removing the image
+        if ($request->boolean('remove_image')) {
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $validated['image'] = null;
+        }
+
         $product->update($validated);
 
         return redirect()->route('products.index')->with('success', 'Product updated successfully.');
@@ -99,6 +121,11 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
+        // Delete product image from disk before removing the record
+        if ($product->image) {
+            Storage::disk('public')->delete($product->image);
+        }
+
         $product->delete();
 
         return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
@@ -108,22 +135,26 @@ class ProductController extends Controller
     {
         return $request->validate([
             'category_id' => ['nullable', 'exists:categories,id'],
-            'name' => ['required', 'string', 'max:255'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'quantity' => ['required', 'integer', 'min:0'],
+            'name'        => ['required', 'string', 'max:255'],
+            'price'       => ['required', 'numeric', 'min:0'],
+            'quantity'    => ['required', 'integer', 'min:0'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'image'       => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:2048'],
         ], [
-            'category_id.exists' => 'Please select a valid category.',
-            'name.required' => 'The product name is required.',
-            'name.string' => 'The product name must be text.',
-            'name.max' => 'The product name must not exceed 255 characters.',
-            'price.required' => 'The price is required.',
-            'price.numeric' => 'The price must be a valid number.',
-            'price.min' => 'The price must be 0 or greater.',
-            'quantity.required' => 'The quantity is required.',
-            'quantity.integer' => 'The quantity must be a whole number.',
-            'quantity.min' => 'The quantity must be 0 or greater.',
-            'description.max' => 'The description must not exceed 1000 characters.',
+            'category_id.exists'  => 'Please select a valid category.',
+            'name.required'       => 'The product name is required.',
+            'name.string'         => 'The product name must be text.',
+            'name.max'            => 'The product name must not exceed 255 characters.',
+            'price.required'      => 'The price is required.',
+            'price.numeric'       => 'The price must be a valid number.',
+            'price.min'           => 'The price must be 0 or greater.',
+            'quantity.required'   => 'The quantity is required.',
+            'quantity.integer'    => 'The quantity must be a whole number.',
+            'quantity.min'        => 'The quantity must be 0 or greater.',
+            'description.max'     => 'The description must not exceed 1000 characters.',
+            'image.image'         => 'The file must be an image.',
+            'image.mimes'         => 'Accepted formats: jpg, jpeg, png, webp, gif.',
+            'image.max'           => 'Image must be smaller than 2 MB.',
         ]);
     }
 }

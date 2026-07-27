@@ -73,11 +73,78 @@
     .char-count.warn { color: #f59e0b; }
     .char-count.over { color: #f43f5e; }
 
+    /* ── Current image display ── */
+    .current-img-wrap {
+        position: relative; border-radius: var(--radius-sm); overflow: hidden;
+        border: 1px solid var(--border); background: var(--bg-elevated);
+    }
+    .current-img-wrap img {
+        width: 100%; max-height: 260px; object-fit: cover; display: block;
+    }
+    .current-img-overlay {
+        position: absolute; bottom: 0; left: 0; right: 0; padding: 10px 14px;
+        background: linear-gradient(transparent, rgba(0,0,0,0.65));
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .current-img-label { font-size: 0.78rem; color: rgba(255,255,255,0.8); }
+    .btn-remove-img {
+        display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px;
+        background: rgba(244,63,94,0.85); color: #fff; border: none; border-radius: 6px;
+        font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: var(--transition);
+    }
+    .btn-remove-img:hover { background: #f43f5e; }
+    .btn-remove-img svg { width: 13px; height: 13px; }
+
+    .removed-notice {
+        display: none; align-items: center; gap: 8px; padding: 10px 14px;
+        background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.25);
+        border-radius: var(--radius-sm); font-size: 0.82rem; color: #f43f5e;
+    }
+    .removed-notice svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .btn-undo { margin-left: auto; font-size: 0.78rem; color: var(--accent-1); cursor: pointer; border: none; background: none; font-weight: 600; }
+
+    /* ── Upload zone ── */
+    .upload-zone {
+        border: 2px dashed var(--border); border-radius: var(--radius-sm);
+        padding: 28px 20px; text-align: center; cursor: pointer;
+        transition: var(--transition); background: var(--bg-elevated);
+        position: relative;
+    }
+    .upload-zone:hover,
+    .upload-zone.drag-over { border-color: var(--accent-1); background: var(--accent-soft); }
+    .upload-zone input[type="file"] {
+        position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+        padding: 0; border: none; background: none;
+    }
+    .upload-zone-icon {
+        width: 48px; height: 48px; border-radius: 50%; background: var(--accent-soft);
+        display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;
+    }
+    .upload-zone-icon svg { width: 22px; height: 22px; color: var(--accent-1); }
+    .upload-zone p { font-size: 0.875rem; color: var(--text-secondary); }
+    .upload-zone span { font-size: 0.78rem; color: var(--text-muted); }
+
+    .img-preview-wrap {
+        display: none; position: relative; margin-top: 12px;
+        border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border);
+    }
+    .img-preview-wrap img {
+        width: 100%; max-height: 260px; object-fit: cover; display: block;
+    }
+    .img-preview-remove {
+        position: absolute; top: 8px; right: 8px;
+        width: 30px; height: 30px; border-radius: 50%;
+        background: rgba(0,0,0,0.55); border: none; cursor: pointer; color: #fff;
+        display: flex; align-items: center; justify-content: center; transition: var(--transition);
+    }
+    .img-preview-remove:hover { background: #f43f5e; }
+    .img-preview-remove svg { width: 16px; height: 16px; }
+
+    /* ── Footer ── */
     .form-footer {
         display: flex; align-items: center; justify-content: flex-end; gap: 10px;
         padding: 20px 28px; border-top: 1px solid var(--border); background: var(--bg-elevated);
     }
-
     .btn {
         display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px;
         border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 600; cursor: pointer;
@@ -119,11 +186,12 @@
             </div>
         </div>
 
-        <form action="{{ route('products.update', $product) }}" method="POST" novalidate>
+        <form action="{{ route('products.update', $product) }}" method="POST" enctype="multipart/form-data" novalidate>
             @csrf
             @method('PUT')
 
             <div class="form-body">
+                {{-- Product Name --}}
                 <div class="field-group">
                     <label for="name">Product Name <span class="required">*</span></label>
                     <div class="input-wrap">
@@ -137,6 +205,7 @@
                     @enderror
                 </div>
 
+                {{-- Category --}}
                 <div class="field-group">
                     <label for="category_id">Category</label>
                     <div class="input-wrap">
@@ -157,6 +226,7 @@
                     @enderror
                 </div>
 
+                {{-- Price --}}
                 <div class="field-group">
                     <label for="price">Price <span class="required">*</span></label>
                     <div class="input-wrap">
@@ -170,6 +240,7 @@
                     @enderror
                 </div>
 
+                {{-- Quantity --}}
                 <div class="field-group">
                     <label for="quantity">Quantity <span class="required">*</span></label>
                     <div class="input-wrap">
@@ -183,6 +254,7 @@
                     @enderror
                 </div>
 
+                {{-- Description --}}
                 <div class="field-group">
                     <label for="description">Description</label>
                     <textarea id="description" name="description" placeholder="Add a short product description" maxlength="1000" class="{{ $errors->has('description') ? 'is-invalid' : '' }}">{{ old('description', $product->description) }}</textarea>
@@ -194,6 +266,84 @@
                         @enderror
                         <span class="char-count" id="desc-counter">0 / 1000</span>
                     </div>
+                </div>
+
+                {{-- Image --}}
+                <div class="field-group">
+                    <label>Product Image</label>
+
+                    {{-- Hidden flag to signal image removal --}}
+                    <input type="hidden" name="remove_image" id="remove_image" value="0">
+
+                    @if($product->image)
+                        {{-- Current image --}}
+                        <div class="current-img-wrap" id="current-img-wrap">
+                            <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}">
+                            <div class="current-img-overlay">
+                                <span class="current-img-label">Current image</span>
+                                <button type="button" class="btn-remove-img" id="btn-remove-img">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                                    </svg>
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Removed notice --}}
+                        <div class="removed-notice" id="removed-notice">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/>
+                            </svg>
+                            Image will be removed on save.
+                            <button type="button" class="btn-undo" id="btn-undo-remove">Undo</button>
+                        </div>
+
+                        {{-- Replace upload --}}
+                        <div class="upload-zone" id="upload-zone" style="display:none;">
+                            <input type="file" id="image" name="image" accept="image/*" class="{{ $errors->has('image') ? 'is-invalid' : '' }}">
+                            <div class="upload-zone-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+                                </svg>
+                            </div>
+                            <p>Click to upload a replacement image</p>
+                            <span>JPG, PNG, WEBP, GIF · max 2 MB</span>
+                        </div>
+                    @else
+                        {{-- No existing image — show upload zone --}}
+                        <div class="upload-zone" id="upload-zone">
+                            <input type="file" id="image" name="image" accept="image/*" class="{{ $errors->has('image') ? 'is-invalid' : '' }}">
+                            <div class="upload-zone-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/>
+                                </svg>
+                            </div>
+                            <p>Click to upload or drag and drop</p>
+                            <span>JPG, PNG, WEBP, GIF · max 2 MB</span>
+                        </div>
+                    @endif
+
+                    {{-- New file preview --}}
+                    <div class="img-preview-wrap" id="img-preview-wrap">
+                        <img id="img-preview" src="" alt="New image preview">
+                        <button type="button" class="img-preview-remove" id="img-preview-remove" title="Cancel selection">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    @error('image')
+                        <span class="field-error">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"/>
+                            </svg>
+                            {{ $message }}
+                        </span>
+                    @enderror
+
+                    <span class="field-hint">Upload a new image to replace the current one.</span>
                 </div>
             </div>
 
@@ -213,19 +363,84 @@
 
 @section('scripts')
 <script>
-    const descEl = document.getElementById('description');
+    // Description char counter
+    const descEl    = document.getElementById('description');
     const counterEl = document.getElementById('desc-counter');
     const MAX = 1000;
-
     function updateCounter() {
         const len = descEl.value.length;
         counterEl.textContent = len + ' / ' + MAX;
         counterEl.className = 'char-count' + (len > MAX * 0.9 && len <= MAX ? ' warn' : len > MAX ? ' over' : '');
     }
+    if (descEl) { descEl.addEventListener('input', updateCounter); updateCounter(); }
 
-    if (descEl) {
-        descEl.addEventListener('input', updateCounter);
-        updateCounter();
+    // Elements (may not exist if product has no image)
+    const imageInput       = document.getElementById('image');
+    const previewWrap      = document.getElementById('img-preview-wrap');
+    const previewImg       = document.getElementById('img-preview');
+    const removePreviewBtn = document.getElementById('img-preview-remove');
+    const uploadZone       = document.getElementById('upload-zone');
+    const removeImgFlag    = document.getElementById('remove_image');
+
+    // Existing-image controls (only present when product has an image)
+    const currentWrap      = document.getElementById('current-img-wrap');
+    const removedNotice    = document.getElementById('removed-notice');
+    const btnRemove        = document.getElementById('btn-remove-img');
+    const btnUndo          = document.getElementById('btn-undo-remove');
+
+    // ── Remove existing image ──
+    if (btnRemove) {
+        btnRemove.addEventListener('click', () => {
+            removeImgFlag.value = '1';
+            currentWrap.style.display   = 'none';
+            removedNotice.style.display = 'flex';
+            if (uploadZone) uploadZone.style.display = 'block';
+        });
+    }
+
+    // ── Undo remove ──
+    if (btnUndo) {
+        btnUndo.addEventListener('click', () => {
+            removeImgFlag.value = '0';
+            currentWrap.style.display   = 'block';
+            removedNotice.style.display = 'none';
+            if (uploadZone) uploadZone.style.display = 'none';
+            // Clear any newly selected file too
+            if (imageInput) imageInput.value = '';
+            if (previewWrap) previewWrap.style.display = 'none';
+        });
+    }
+
+    // ── New file preview ──
+    if (imageInput) {
+        imageInput.addEventListener('change', function () {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                previewImg.src = e.target.result;
+                previewWrap.style.display = 'block';
+                if (uploadZone) uploadZone.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // ── Cancel new selection ──
+    if (removePreviewBtn) {
+        removePreviewBtn.addEventListener('click', () => {
+            if (imageInput) imageInput.value = '';
+            previewImg.src = '';
+            previewWrap.style.display = 'none';
+            if (uploadZone) uploadZone.style.display = 'block';
+        });
+    }
+
+    // ── Drag-and-drop highlight ──
+    if (uploadZone) {
+        uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+        uploadZone.addEventListener('drop',      e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); });
     }
 </script>
 @endsection

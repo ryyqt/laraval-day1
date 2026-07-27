@@ -139,6 +139,18 @@
     .actions { display: flex; align-items: center; gap: 8px; }
     .dt { font-size: 0.78rem; color: var(--text-muted); }
 
+    /* product thumbnail */
+    .prod-thumb {
+        width: 48px; height: 48px; border-radius: 8px; object-fit: cover;
+        border: 1px solid var(--border); flex-shrink: 0;
+    }
+    .prod-thumb-placeholder {
+        width: 48px; height: 48px; border-radius: 8px;
+        background: var(--bg-elevated); border: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .prod-thumb-placeholder svg { width: 20px; height: 20px; color: var(--text-muted); }
+
     /* ── Pagination ── */
     .pagination-wrap {
         display: flex; align-items: center; justify-content: space-between;
@@ -302,6 +314,7 @@
                 <thead>
                     <tr>
                         <th>#</th>
+                        <th>Image</th>
                         <th>Name</th>
                         <th>Category</th>
                         <th>Price</th>
@@ -314,6 +327,17 @@
                     @foreach($products as $i => $product)
                         <tr>
                             <td class="dt">{{ $products->firstItem() + $i }}</td>
+                            <td>
+                                @if($product->image)
+                                    <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="prod-thumb">
+                                @else
+                                    <div class="prod-thumb-placeholder">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
+                                        </svg>
+                                    </div>
+                                @endif
+                            </td>
                             <td>
                                 <div class="product-name">
                                     <span class="prod-dot"></span>
