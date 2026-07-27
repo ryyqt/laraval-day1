@@ -1,300 +1,347 @@
 @extends('layouts.app')
 
 @section('title', 'Dashboard')
-@section('meta_description', 'Analytics dashboard — visitors, revenue, orders, and recent activity at a glance.')
+@section('meta_description', 'Dashboard — total products, categories, stock quantity, and latest products.')
 
 @section('styles')
 <style>
-    /* ─── Dashboard-specific styles ─────────────────────────── */
-    .dash-kpi-grid {
+    /* ── Page header (matches product page) ── */
+    .page-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 28px; flex-wrap: wrap; gap: 14px;
+    }
+    .page-header h1 {
+        font-size: 1.7rem; font-weight: 800; letter-spacing: -0.03em; color: var(--text-primary);
+    }
+    .page-header p { margin-top: 4px; color: var(--text-secondary); font-size: 0.9rem; }
+
+    /* ── Stat cards grid ── */
+    .stats-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 18px;
         margin-bottom: 28px;
     }
 
-    .kpi-card {
+    .stat-card {
         background: var(--bg-card);
         border: 1px solid var(--border);
         border-radius: var(--radius-lg);
         padding: 22px;
         transition: var(--transition);
+        position: relative;
         overflow: hidden;
-        position: relative;
     }
-    .kpi-card::after {
-        content: '';
-        position: absolute;
-        bottom: -20px; right: -20px;
-        width: 80px; height: 80px;
-        border-radius: 999px;
-        opacity: 0.06;
+    .stat-card:hover {
+        border-color: var(--border-hover);
+        box-shadow: var(--shadow-glow);
+        transform: translateY(-2px);
     }
-    .kpi-card.c1::after { background: #6366f1; }
-    .kpi-card.c2::after { background: #06b6d4; }
-    .kpi-card.c3::after { background: #10b981; }
-    .kpi-card.c4::after { background: #f59e0b; }
 
-    .kpi-card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: var(--shadow-glow); }
-
-    .kpi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .kpi-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
-    .kpi-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-    .kpi-icon svg { width: 18px; height: 18px; }
-    .kpi-icon.i1 { background: rgba(99,102,241,0.15); color: #6366f1; }
-    .kpi-icon.i2 { background: rgba(6,182,212,0.15); color: #06b6d4; }
-    .kpi-icon.i3 { background: rgba(16,185,129,0.15); color: #10b981; }
-    .kpi-icon.i4 { background: rgba(245,158,11,0.15); color: #f59e0b; }
-
-    .kpi-value { font-size: 2.1rem; font-weight: 800; letter-spacing: -0.04em; color: var(--text-primary); margin-bottom: 6px; }
-    .kpi-delta { font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 4px; }
-    .kpi-delta.up { color: #10b981; }
-    .kpi-delta.dn { color: #f43f5e; }
-
-    /* ─── Chart placeholder ──────────────────────────────────── */
-    .chart-wrap {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        padding: 24px;
-        margin-bottom: 28px;
+    .stat-card-icon {
+        width: 44px; height: 44px;
+        border-radius: var(--radius-sm);
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 14px;
     }
-    .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-    .chart-header h2 { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
-    .chart-tabs { display: flex; gap: 4px; }
-    .chart-tab {
-        padding: 5px 12px; border-radius: 6px;
-        font-size: 0.8rem; font-weight: 600;
-        border: 1px solid var(--border);
-        background: transparent;
-        color: var(--text-secondary);
-        cursor: pointer; transition: var(--transition);
-    }
-    .chart-tab.active, .chart-tab:hover { background: var(--accent-soft); border-color: var(--border-hover); color: var(--accent-1); }
+    .stat-card-icon svg { width: 20px; height: 20px; }
+    .stat-card-icon.indigo  { background: var(--accent-soft); color: var(--accent-1); }
+    .stat-card-icon.cyan    { background: rgba(6,182,212,0.12); color: var(--accent-3); }
+    .stat-card-icon.emerald { background: rgba(16,185,129,0.12); color: #10b981; }
 
-    /* Mini bar chart (pure CSS) */
-    .mini-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; }
-    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-    .bar {
-        width: 100%; border-radius: 4px 4px 0 0;
-        background: var(--accent-soft);
-        border: 1px solid rgba(99,102,241,0.2);
+    .stat-card .stat-value {
+        font-size: 2rem; font-weight: 800; letter-spacing: -0.04em;
+        color: var(--text-primary); margin-bottom: 4px;
+    }
+    .stat-card h3 {
+        font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px;
+    }
+    .stat-card .stat-link {
+        font-size: 0.8rem; font-weight: 600; text-decoration: none;
+        display: inline-flex; align-items: center; gap: 4px;
         transition: var(--transition);
-        position: relative;
-        cursor: pointer;
-        min-height: 4px;
     }
-    .bar:hover { background: var(--accent-1); }
-    .bar-label { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; }
+    .stat-card .stat-link:hover { opacity: 0.8; }
+    .stat-card .stat-link svg { width: 14px; height: 14px; transition: var(--transition); }
+    .stat-card .stat-link:hover svg { transform: translateX(3px); }
 
-    /* ─── Bottom grid ────────────────────────────────────────── */
-    .bottom-grid { display: grid; grid-template-columns: 1fr 380px; gap: 18px; }
+    /* ── Table card (matches product page) ── */
+    .table-card {
+        background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden;
+    }
+    .table-toolbar {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px;
+    }
+    .table-toolbar .section-label {
+        font-size: 1rem; font-weight: 700; color: var(--text-primary);
+        display: flex; align-items: center; gap: 8px;
+    }
+    .table-toolbar .section-label svg { width: 18px; height: 18px; color: var(--accent-1); }
+    .table-count { font-size: 0.8rem; color: var(--text-muted); }
 
-    /* Activity feed */
-    .activity-item {
-        display: flex; align-items: flex-start; gap: 12px;
-        padding: 14px 0;
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: var(--bg-elevated); }
+    thead th {
+        padding: 12px 20px; text-align: left; font-size: 0.75rem; font-weight: 700;
+        letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
         border-bottom: 1px solid var(--border);
     }
-    .activity-item:last-child { border-bottom: none; }
-    .activity-dot-wrap { display: flex; flex-direction: column; align-items: center; gap: 0; padding-top: 4px; }
-    .activity-dot { width: 10px; height: 10px; border-radius: 999px; flex-shrink: 0; }
-    .activity-body { flex: 1; }
-    .activity-text { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; }
-    .activity-text strong { color: var(--text-primary); font-weight: 600; }
-    .activity-time { font-size: 0.73rem; color: var(--text-muted); margin-top: 3px; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background var(--transition); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--bg-elevated); }
+    td {
+        padding: 14px 20px; font-size: 0.875rem; color: var(--text-secondary); vertical-align: middle;
+    }
 
-    /* Top pages mini-table */
-    .mini-table { width: 100%; border-collapse: collapse; font-size: 0.845rem; }
-    .mini-table th { padding: 6px 0; text-align: left; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
-    .mini-table td { padding: 10px 0; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: middle; }
-    .mini-table tr:last-child td { border-bottom: none; }
-    .mini-table .page-name { color: var(--text-primary); font-weight: 500; }
-    .mini-table .visits-bar-bg { height: 5px; background: var(--bg-elevated); border-radius: 999px; margin-top: 4px; width: 100%; }
-    .mini-table .visits-bar { height: 100%; border-radius: 999px; background: var(--accent-grad); }
+    .product-name {
+        display: inline-flex; align-items: center; gap: 8px; color: var(--text-primary); font-weight: 600;
+    }
+    .prod-dot {
+        width: 8px; height: 8px; border-radius: 999px; background: var(--accent-grad); flex-shrink: 0;
+    }
+    .pill {
+        display: inline-flex; padding: 4px 10px; border-radius: 999px;
+        background: var(--accent-soft); color: var(--accent-1); font-size: 0.75rem; font-weight: 700;
+    }
+    .dt { font-size: 0.78rem; color: var(--text-muted); }
 
-    @media (max-width: 1200px) { .dash-kpi-grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 900px)  { .dash-kpi-grid { grid-template-columns: 1fr; } .bottom-grid { grid-template-columns: 1fr; } }
+    /* product thumbnail */
+    .prod-thumb {
+        width: 48px; height: 48px; border-radius: 8px; object-fit: cover;
+        border: 1px solid var(--border); flex-shrink: 0;
+    }
+    .prod-thumb-placeholder {
+        width: 48px; height: 48px; border-radius: 8px;
+        background: var(--bg-elevated); border: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .prod-thumb-placeholder svg { width: 20px; height: 20px; color: var(--text-muted); }
+
+    /* table footer link */
+    .table-footer {
+        padding: 14px 20px; border-top: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .table-footer a {
+        font-size: 0.82rem; font-weight: 600; color: var(--accent-1);
+        text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+        transition: var(--transition);
+    }
+    .table-footer a svg { width: 14px; height: 14px; transition: var(--transition); }
+    .table-footer a:hover svg { transform: translateX(3px); }
+
+    /* ── Buttons (matches product page) ── */
+    .btn {
+        display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px;
+        border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 600; cursor: pointer;
+        transition: var(--transition); border: none; text-decoration: none; white-space: nowrap;
+    }
+    .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .btn-primary {
+        background: var(--accent-grad); color: #fff;
+        box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.45); }
+
+    /* ── Empty state ── */
+    .empty-state {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 60px 20px; gap: 14px; color: var(--text-muted);
+    }
+    .empty-icon {
+        width: 64px; height: 64px; border-radius: 50%; background: var(--accent-soft);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .empty-icon svg { width: 28px; height: 28px; color: var(--accent-1); }
+    .empty-state h3 { font-size: 1.05rem; font-weight: 700; color: var(--text-secondary); }
+    .empty-state p { font-size: 0.875rem; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+        .stats-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 1100px) and (min-width: 901px) {
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
 </style>
 @endsection
 
 @section('content')
-    <!-- Page Header -->
+<div class="page-shell">
+
+    {{-- Page header (same style as product page) --}}
     <div class="page-header">
-        <h1>Dashboard</h1>
-        <p>Real-time overview of your application's key metrics and activity.</p>
+        <div>
+            <h1>Dashboard</h1>
+            <p>Overview of your product catalog, categories, and stock levels.</p>
+        </div>
+        <a href="{{ route('products.create') }}" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            Add Product
+        </a>
     </div>
 
-    <!-- Hero -->
-    <div class="hero-banner" role="banner">
-        <h1>Analytics Overview</h1>
-        <p>Here is a comprehensive look at your visitors, revenue, orders, and everything in between — all updated in real time.</p>
+    {{-- ── Stat Cards ── --}}
+    <div class="stats-grid">
+
+        {{-- Total Products --}}
+        <div class="stat-card" id="card-total-products">
+            <div class="stat-card-icon indigo">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4m-2-4v8M3.75 7.5h16.5M10.5 3.75h3A2.25 2.25 0 0 1 15.75 6v1.5h-7.5V6A2.25 2.25 0 0 1 10.5 3.75Z"/>
+                </svg>
+            </div>
+            <div class="stat-value" id="val-products">{{ number_format($totalProducts) }}</div>
+            <h3>Total Products</h3>
+            <a href="{{ route('products.index') }}" class="stat-link" style="color: var(--accent-1);">
+                View all products
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+            </a>
+        </div>
+
+        {{-- Total Categories --}}
+        <div class="stat-card" id="card-total-categories">
+            <div class="stat-card-icon cyan">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z"/>
+                </svg>
+            </div>
+            <div class="stat-value" id="val-categories">{{ number_format($totalCategories) }}</div>
+            <h3>Total Categories</h3>
+            <a href="{{ route('categories.index') }}" class="stat-link" style="color: var(--accent-3);">
+                Manage categories
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+            </a>
+        </div>
+
+        {{-- Total Quantity --}}
+        <div class="stat-card" id="card-total-quantity">
+            <div class="stat-card-icon emerald">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3"/>
+                </svg>
+            </div>
+            <div class="stat-value" id="val-quantity">{{ number_format($totalQuantity) }}</div>
+            <h3>Total Stock Quantity</h3>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Units across all products</span>
+        </div>
+
     </div>
 
-    <!-- KPI Grid -->
-    <div class="dash-kpi-grid">
-        <div class="kpi-card c1" id="kpi-visitors">
-            <div class="kpi-top">
-                <span class="kpi-label">Visitors</span>
-                <div class="kpi-icon i1">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
-                </div>
+    {{-- ── Latest 5 Products (same table-card style as product page) ── --}}
+    <div class="table-card" id="card-latest-products">
+        <div class="table-toolbar">
+            <div class="section-label">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                </svg>
+                Latest 5 Products
             </div>
-            <div class="kpi-value">1,240</div>
-            <div class="kpi-delta up">↑ 18.3% vs last month</div>
-        </div>
-        <div class="kpi-card c2" id="kpi-orders">
-            <div class="kpi-top">
-                <span class="kpi-label">Orders</span>
-                <div class="kpi-icon i2">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"/></svg>
-                </div>
-            </div>
-            <div class="kpi-value">89</div>
-            <div class="kpi-delta up">↑ 7.1% vs last month</div>
-        </div>
-        <div class="kpi-card c3" id="kpi-revenue">
-            <div class="kpi-top">
-                <span class="kpi-label">Revenue</span>
-                <div class="kpi-icon i3">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
-                </div>
-            </div>
-            <div class="kpi-value">$12.4k</div>
-            <div class="kpi-delta up">↑ 22.5% vs last month</div>
-        </div>
-        <div class="kpi-card c4" id="kpi-bounce">
-            <div class="kpi-top">
-                <span class="kpi-label">Bounce Rate</span>
-                <div class="kpi-icon i4">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"/></svg>
-                </div>
-            </div>
-            <div class="kpi-value">34.2%</div>
-            <div class="kpi-delta dn">↓ 4.3% improvement</div>
-        </div>
-    </div>
-
-    <!-- Traffic Chart -->
-    <div class="chart-wrap">
-        <div class="chart-header">
-            <h2>Traffic Overview</h2>
-            <div class="chart-tabs" role="tablist">
-                <button class="chart-tab active" id="tab-7d" role="tab" aria-selected="true">7D</button>
-                <button class="chart-tab" id="tab-30d" role="tab" aria-selected="false">30D</button>
-                <button class="chart-tab" id="tab-90d" role="tab" aria-selected="false">90D</button>
-            </div>
-        </div>
-        <div class="mini-chart" id="traffic-chart" role="img" aria-label="Weekly traffic bar chart">
-            <div class="bar-col"><div class="bar" style="height:55px;" title="Mon – 820 visits"></div><span class="bar-label">Mon</span></div>
-            <div class="bar-col"><div class="bar" style="height:80px;" title="Tue – 1,140 visits"></div><span class="bar-label">Tue</span></div>
-            <div class="bar-col"><div class="bar" style="height:65px;" title="Wed – 960 visits"></div><span class="bar-label">Wed</span></div>
-            <div class="bar-col"><div class="bar" style="height:100px;" title="Thu – 1,420 visits"></div><span class="bar-label">Thu</span></div>
-            <div class="bar-col"><div class="bar" style="height:90px;" title="Fri – 1,280 visits"></div><span class="bar-label">Fri</span></div>
-            <div class="bar-col"><div class="bar" style="height:45px;" title="Sat – 670 visits"></div><span class="bar-label">Sat</span></div>
-            <div class="bar-col"><div class="bar" style="height:35px;" title="Sun – 520 visits"></div><span class="bar-label">Sun</span></div>
-        </div>
-    </div>
-
-    <!-- Bottom Grid -->
-    <div class="bottom-grid">
-        <!-- Activity Feed -->
-        <div class="card" id="activity-feed">
-            <h2 class="section-title">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:17px;height:17px;color:var(--accent-1)"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
-                Recent Activity
-            </h2>
-            <div class="list">
-                <div class="activity-item">
-                    <div class="activity-dot-wrap"><div class="activity-dot" style="background:#10b981;"></div></div>
-                    <div class="activity-body">
-                        <div class="activity-text"><strong>New user signed up</strong> — Emily Clark joined the workspace.</div>
-                        <div class="activity-time">2 minutes ago</div>
-                    </div>
-                </div>
-                <div class="activity-item">
-                    <div class="activity-dot-wrap"><div class="activity-dot" style="background:#6366f1;"></div></div>
-                    <div class="activity-body">
-                        <div class="activity-text"><strong>Invoice #102 marked paid</strong> — $1,400 cleared.</div>
-                        <div class="activity-time">18 minutes ago</div>
-                    </div>
-                </div>
-                <div class="activity-item">
-                    <div class="activity-dot-wrap"><div class="activity-dot" style="background:#06b6d4;"></div></div>
-                    <div class="activity-body">
-                        <div class="activity-text"><strong>Report exported</strong> — Monthly analytics CSV generated.</div>
-                        <div class="activity-time">1 hour ago</div>
-                    </div>
-                </div>
-                <div class="activity-item">
-                    <div class="activity-dot-wrap"><div class="activity-dot" style="background:#f59e0b;"></div></div>
-                    <div class="activity-body">
-                        <div class="activity-text"><strong>Deployment triggered</strong> — Staging build #34 started.</div>
-                        <div class="activity-time">3 hours ago</div>
-                    </div>
-                </div>
-                <div class="activity-item">
-                    <div class="activity-dot-wrap"><div class="activity-dot" style="background:#f43f5e;"></div></div>
-                    <div class="activity-body">
-                        <div class="activity-text"><strong>Alert resolved</strong> — High memory usage on server-02 normalised.</div>
-                        <div class="activity-time">Yesterday, 11:40 PM</div>
-                    </div>
-                </div>
+            <div class="table-count">
+                Showing <strong>{{ $latestProducts->count() }}</strong> most recent {{ Str::plural('product', $latestProducts->count()) }}
             </div>
         </div>
 
-        <!-- Top Pages -->
-        <div class="card" id="top-pages">
-            <h2 class="section-title">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:17px;height:17px;color:var(--accent-1)"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75Z"/></svg>
-                Top Pages
-            </h2>
-            <table class="mini-table">
+        @if($latestProducts->count())
+            <table>
                 <thead>
                     <tr>
-                        <th>Page</th>
-                        <th style="text-align:right;">Visits</th>
+                        <th>#</th>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Added</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td><div class="page-name">/home</div><div class="visits-bar-bg"><div class="visits-bar" style="width:95%;"></div></div></td>
-                        <td style="text-align:right;font-weight:700;color:var(--text-primary);">1,240</td>
-                    </tr>
-                    <tr>
-                        <td><div class="page-name">/dashboard</div><div class="visits-bar-bg"><div class="visits-bar" style="width:70%;"></div></div></td>
-                        <td style="text-align:right;font-weight:700;color:var(--text-primary);">867</td>
-                    </tr>
-                    <tr>
-                        <td><div class="page-name">/reports</div><div class="visits-bar-bg"><div class="visits-bar" style="width:52%;"></div></div></td>
-                        <td style="text-align:right;font-weight:700;color:var(--text-primary);">644</td>
-                    </tr>
-                    <tr>
-                        <td><div class="page-name">/users</div><div class="visits-bar-bg"><div class="visits-bar" style="width:38%;"></div></div></td>
-                        <td style="text-align:right;font-weight:700;color:var(--text-primary);">470</td>
-                    </tr>
-                    <tr>
-                        <td><div class="page-name">/settings</div><div class="visits-bar-bg"><div class="visits-bar" style="width:20%;"></div></div></td>
-                        <td style="text-align:right;font-weight:700;color:var(--text-primary);">248</td>
-                    </tr>
+                    @foreach($latestProducts as $i => $product)
+                        <tr>
+                            <td class="dt">{{ $i + 1 }}</td>
+                            <td>
+                                @if($product->image)
+                                    <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="prod-thumb">
+                                @else
+                                    <div class="prod-thumb-placeholder">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
+                                        </svg>
+                                    </div>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="product-name">
+                                    <span class="prod-dot"></span>
+                                    {{ $product->name }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="pill">{{ $product->category?->name ?? 'Uncategorized' }}</span>
+                            </td>
+                            <td>${{ number_format($product->price ?? 0, 2) }}</td>
+                            <td>{{ number_format($product->quantity ?? 0) }}</td>
+                            <td class="dt">{{ $product->created_at?->format('M d, Y') ?? '—' }}</td>
+                        </tr>
+                    @endforeach
                 </tbody>
             </table>
-        </div>
+
+            <div class="table-footer">
+                <a href="{{ route('products.index') }}">
+                    View all products
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+                </a>
+                <a href="{{ route('products.create') }}">
+                    Add new product
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                </a>
+            </div>
+        @else
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4m-2-4v8M3.75 7.5h16.5"/>
+                    </svg>
+                </div>
+                <h3>No products yet</h3>
+                <p>Create your first product to start building the catalog.</p>
+                <a href="{{ route('products.create') }}" class="btn btn-primary" style="margin-top: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                    </svg>
+                    Add Product
+                </a>
+            </div>
+        @endif
     </div>
+
+</div>
 @endsection
 
 @section('scripts')
 <script>
-    // Tab switcher for chart
-    document.querySelectorAll('.chart-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.chart-tab').forEach(t => {
-                t.classList.remove('active');
-                t.setAttribute('aria-selected', 'false');
-            });
-            tab.classList.add('active');
-            tab.setAttribute('aria-selected', 'true');
-        });
+    // Animated count-up for stat values on page load
+    function countUp(el, target, duration = 900) {
+        if (!el) return;
+        const start = performance.now();
+        function step(now) {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const ease = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.floor(target * ease).toLocaleString();
+            if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        countUp(document.getElementById('val-products'),   {{ $totalProducts }});
+        countUp(document.getElementById('val-categories'), {{ $totalCategories }});
+        countUp(document.getElementById('val-quantity'),   {{ $totalQuantity }});
     });
 </script>
 @endsection
