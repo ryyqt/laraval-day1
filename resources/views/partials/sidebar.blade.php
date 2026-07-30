@@ -61,6 +61,20 @@
             <span class="nav-label">Customers</span>
         </a>
 
+        <!-- Day 9 -->
+        <span class="nav-section-label">Day 9</span>
+
+        <a id="nav-ajax-products"
+           class="nav-link {{ request()->routeIs('ajax-products.*') ? 'active' : '' }}"
+           href="{{ route('ajax-products.index') }}"
+           aria-current="{{ request()->routeIs('ajax-products.*') ? 'page' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"/>
+            </svg>
+            <span class="nav-label">AJAX Products</span>
+            <span class="nav-badge">API</span>
+        </a>
+
 
     </nav>
 
