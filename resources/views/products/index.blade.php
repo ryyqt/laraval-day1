@@ -216,15 +216,8 @@
         </a>
     </div>
 
-    {{-- Flash message --}}
-    @if(session('success'))
-        <div class="alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-            </svg>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
+    {{-- Flash messages --}}
+    @include('partials.flash')
 
     {{-- ── Search / Filter / Sort bar ── --}}
     <form method="GET" action="{{ route('products.index') }}" id="filter-form">
@@ -360,12 +353,16 @@
                             <td class="dt">{{ $product->created_at?->format('M d, Y') ?? '—' }}</td>
                             <td>
                                 <div class="actions">
-                                    <a href="{{ route('products.edit', $product) }}" class="btn btn-ghost btn-sm">Edit</a>
-                                    <form action="{{ route('products.destroy', $product) }}" method="POST" onsubmit="return confirm('Delete this product?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                    </form>
+                                    <a href="{{ route('products.edit', $product) }}" class="btn btn-ghost btn-sm"
+                                       id="btn-edit-prod-{{ $product->id }}">Edit</a>
+                                    <button type="button" class="btn btn-danger btn-sm"
+                                            id="btn-del-prod-{{ $product->id }}"
+                                            onclick="openDeleteModal(
+                                                '{{ route('products.destroy', $product) }}',
+                                                '{{ addslashes($product->name) }}'
+                                            )">
+                                        Delete
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -440,4 +437,6 @@
         </div>
     @endif
 </div>
+
+@include('partials.delete-modal')
 @endsection
