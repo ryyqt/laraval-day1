@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-
     protected $fillable = [
         'category_id',
         'name',
@@ -19,5 +18,12 @@ class Product extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function invoices()
+    {
+        return $this->belongsToMany(Invoice::class, 'invoice_items')
+                    ->withPivot(['quantity', 'unit_price', 'subtotal'])
+                    ->withTimestamps();
     }
 }
